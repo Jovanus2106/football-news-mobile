@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:football_news/widgets/left_drawer.dart';
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:football_news/screens/menu.dart';
 
 class NewsFormPage extends StatefulWidget {
     const NewsFormPage({super.key});
@@ -27,6 +31,7 @@ class _NewsFormPageState extends State<NewsFormPage> {
 
     @override
     Widget build(BuildContext context) {
+            final request = context.watch<CookieRequest>();
         return Scaffold(
           appBar: AppBar(
             title: const Center(
@@ -162,39 +167,44 @@ class _NewsFormPageState extends State<NewsFormPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.indigo,
                         ),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text('Berita berhasil tersimpan'),
-                                  content: SingleChildScrollView(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('Judul: $_title'),
-                                        Text('Kategori: $_category'),
-                                        Text('Isi Berita: $_content'),
-                                        Text('URL Thumbnail: $_thumbnail'),
-                                        Text('Unggulan: ${_isFeatured ? "Ya" : "Tidak"}'),
-                                      ],
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        _formKey.currentState!.reset();
-                                      },
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          // TODO: Replace the URL with your app's URL
+                          // To connect Android emulator with Django on localhost, use URL http://10.0.2.2/
+                          // If you using chrome,  use URL http://localhost:8000
+                          
+                          final response = await request.postJson(
+                            "http://localhost:8000/create-flutter/",
+                            jsonEncode({
+                              "title": _title,
+                              "content": _content,
+                              "thumbnail": _thumbnail,
+                              "category": _category,
+                              "is_featured": _isFeatured,
+                            }),
+                          );
+                          if (context.mounted) {
+                            if (response['status'] == 'success') {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("News successfully saved!"),
+                              ));
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => MyHomePage(
+                                        colorScheme:
+                                            Theme.of(context).colorScheme)),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Something went wrong, please try again."),
+                              ));
+                            }
                           }
-                        },
+                        }
+                      },
                         child: const Text(
                           "Simpan",
                           style: TextStyle(color: Colors.white),
