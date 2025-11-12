@@ -62,7 +62,7 @@ class ItemCard extends StatelessWidget {
             // If you using chrome,  use URL http://localhost:8000
             
             final response = await request.logout(
-                "http://localhost:8000/auth/logout/");
+                "http://127.0.0.1:8000/auth/logout/");
             String message = response["message"];
             if (context.mounted) {
                 if (response['status']) {
